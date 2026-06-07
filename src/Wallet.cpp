@@ -7,9 +7,6 @@
 
 Wallet :: Wallet() {
     cards = std::vector<GiftCard>();
-    soonToExpireCards = std::vector<GiftCard>();
-    expiredCards = std::vector<GiftCard>();
-
 }
 
 void Wallet :: addCard(GiftCard& card){
@@ -25,33 +22,45 @@ void Wallet :: removeCard(GiftCard& card) {
     }), cards.end());
 }
 
-void Wallet :: addCardToSoonToExpire(GiftCard& card) {
-    if(card.isExpiringSoon()) {
-    soonToExpireCards.push_back(card);}
-}
-
 const std::vector<GiftCard> Wallet :: getCards() const {
     return cards;
 }
 
-int Wallet :: size()  {
+int Wallet :: size() {
     return cards.size();
 }
 
-std::vector<GiftCard> Wallet :: getExpiredCards() const {
-    return expiredCards;
+std::vector<GiftCard> Wallet :: getExpiredCards() {
+    std::vector<GiftCard> result;
+    for (GiftCard& card : cards) {
+        if (card.isExpired()) {
+            result.push_back(card);
+        }
+    }
+    return result;
 }
 
-std::vector<GiftCard> Wallet :: getSoonToExpireCards() const {
-    return soonToExpireCards;
+std::vector<GiftCard> Wallet :: getSoonToExpireCards() {
+    std::vector<GiftCard> result;
+    for (GiftCard& card : cards) {
+        if (card.isExpiringSoon()) {
+            result.push_back(card);
+        }
+    }
+    return result;
 }
 
 std::vector<GiftCard> Wallet :: getCardsByCompany(const std::string& company) const {
     auto it = cardsByCompany.find(company);
     if(it != cardsByCompany.end()) {
-        return it->second; // Return a vector containing the found card
+        return it->second;
     }
-    return {}; // Return an empty vector if no cards are found
+    return {};
+}
+
+void Wallet::addCompanyToCard(GiftCard* card, const std::string& company) {
+    card->addCompany(company);
+    cardsByCompany[company].push_back(*card);
 }
 
 GiftCard* Wallet::findCardById(int id) {

@@ -22,7 +22,6 @@ class GiftCard {
         double getBalance() const;
         std::string getExpiryDate() const;
         int getId() const;
-        int daysLeft;
         int getDaysToExpiry() const;
         std::string getTodayDate() ;
 
@@ -39,6 +38,7 @@ class GiftCard {
          
 
     protected:
+        int daysLeft;
 };
 
 #endif 
