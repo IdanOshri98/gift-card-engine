@@ -8,7 +8,7 @@
 #include "../include/GiftCard.h"
 
 
-GiftCard :: GiftCard(int id, std::string& title, std::vector<std::string>& companies, double& balance, std::string& expiryDate):
+GiftCard :: GiftCard(int id, const std::string& title, const std::vector<std::string>& companies, double balance, const std::string& expiryDate):
 id(id), title(title), companies(companies), balance(balance), expiryDate(expiryDate) {
     updateDaysLeft();
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <string>
 
@@ -20,7 +21,12 @@ void GCApp::run() {
         showMenu();
 
         int choice;
-        std::cin >> choice;
+        if (!(std::cin >> choice)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input. Please enter a number.\n";
+            continue;
+        }
 
         if (choice == 0) {
             std::cout << "Exiting..." << std::endl;
@@ -42,5 +48,8 @@ void GCApp::showMenu() {
               << " 1. add card\n"
               << " 2. show cards\n"
               << " 3. edit card\n"
+              << " 4. remove card\n"
+              << " 5. plan redemption\n"
+              << " 6. analyze risk\n"
               << " 0. exit\n";
 }

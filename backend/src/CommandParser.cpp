@@ -9,22 +9,35 @@ CommandParser::CommandParser(Wallet& wallet, FileRepository& repo)
 
 void CommandParser::execute(int choice) {
     switch (choice) {
-        case 1: addCard();   break;
-        case 2: showCards(); break;
-        case 3: editCard();  break;
+        case 1: addCard();     break;
+        case 2: showCards();   break;
+        case 3: editCard();    break;
+        case 4: removeCard();  break;
+        case 5: planCards();   break;
+        case 6: analyzeRisk(); break;
         default:
             std::cout << "Invalid choice. Please try again." << std::endl;
     }
 }
 
 void CommandParser::addCard() {
-    int id = wallet.size() + 1;
+    int id = wallet.getNextId();
     std::string title;
     double balance;
     std::string expiryDate;
 
-    std::cout << "Enter card details (title, balance, expiry date DD-MM-YYYY): \n";
-    std::cin >> title >> balance >> expiryDate;
+    std::cout << "Enter title: \n";
+    std::cin >> title;
+
+    std::cout << "Enter balance: \n";
+    std::cin >> balance;
+    if (balance <= 0) {
+        std::cout << "Balance must be greater than 0. Cancelled.\n";
+        return;
+    }
+
+    std::cout << "Enter expiry date (DD-MM-YYYY): \n";
+    std::cin >> expiryDate;
 
     std::cout << "Enter companies (type 'done' when finished): \n";
     std::string company;
@@ -118,9 +131,17 @@ void CommandParser::editCard() {
             std::cout << "to set new balance type = , to add type + , to subtract type - : \n";
             char operation;
             std::cin >> operation;
+            if (operation != '+' && operation != '-' && operation != '=') {
+                std::cout << "Invalid operation. Use +, - or =.\n";
+                break;
+            }
             std::cout << "Enter amount: \n";
             double amount;
             std::cin >> amount;
+            if (amount <= 0) {
+                std::cout << "Amount must be greater than 0.\n";
+                break;
+            }
             if (operation == '+') {
                 card->addBalance(amount);
             } else if (operation == '-') {
@@ -154,4 +175,92 @@ void CommandParser::editCard() {
     }
 
     repo.save(wallet.getCards());
+}
+
+void CommandParser::removeCard() {
+    std::cout << "Enter card ID to remove: \n";
+    int id;
+    std::cin >> id;
+
+    GiftCard* card = wallet.findCardById(id);
+    if (card == nullptr) {
+        std::cout << "Card not found.\n";
+        return;
+    }
+
+    card->updateDaysLeft();
+    std::cout << "Card to remove:\n"
+              << "  ID: "          << card->getId()
+              << " | Title: "      << card->getTitle()
+              << " | Balance: "    << card->getBalance()
+              << " | Expiry Date: "<< card->getExpiryDate()
+              << " | Days Left: "  << card->getDaysToExpiry()
+              << std::endl;
+
+    std::cout << "Are you sure you want to remove this card? (y/n): \n";
+    char confirm;
+    std::cin >> confirm;
+
+    if (confirm != 'y' && confirm != 'Y') {
+        std::cout << "Cancelled." << std::endl;
+        return;
+    }
+
+    wallet.removeCard(*card);
+    repo.save(wallet.getCards());
+    std::cout << "Card removed successfully!" << std::endl;
+}
+
+void CommandParser::planCards() {
+    std::cout << "Plan redemption by:\n"
+              << "1. expiry date (use soonest-expiring first)\n"
+              << "2. balance (use lowest balance first)\n";
+
+    int choice;
+    std::cin >> choice;
+
+    std::vector<GiftCard> cards = wallet.getCards();
+    std::vector<GiftCard> planned;
+
+    if (choice == 1) {
+        planned = RedemptionPlanner::planByExpiry(cards);
+        std::cout << "Recommended order (by expiry):" << std::endl;
+    } else if (choice == 2) {
+        planned = RedemptionPlanner::planByBalance(cards);
+        std::cout << "Recommended order (by balance):" << std::endl;
+    } else {
+        std::cout << "Invalid choice." << std::endl;
+        return;
+    }
+
+    int rank = 1;
+    for (GiftCard& card : planned) {
+        card.updateDaysLeft();
+        std::cout << rank++ << ". "
+                  << card.getTitle()
+                  << " | Balance: " << card.getBalance()
+                  << " | Days Left: " << card.getDaysToExpiry()
+                  << std::endl;
+    }
+}
+
+void CommandParser::analyzeRisk() {
+    std::vector<GiftCard> cards = wallet.getCards();
+    std::vector<GiftCard> atRisk = RiskAnalyzer::getAtRiskCards(cards);
+    double totalRisk = RiskAnalyzer::getTotalAtRiskBalance(cards);
+
+    if (atRisk.empty()) {
+        std::cout << "No at-risk cards." << std::endl;
+        return;
+    }
+
+    std::cout << "At-risk cards (expiring within 30 days with remaining balance):" << std::endl;
+    for (GiftCard& card : atRisk) {
+        card.updateDaysLeft();
+        std::cout << "  " << card.getTitle()
+                  << " | Balance: " << card.getBalance()
+                  << " | Days Left: " << card.getDaysToExpiry()
+                  << std::endl;
+    }
+    std::cout << "Total at-risk balance: " << totalRisk << std::endl;
 }

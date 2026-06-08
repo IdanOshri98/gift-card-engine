@@ -3,6 +3,8 @@
 
 #include "Wallet.h"
 #include "FileRepository.h"
+#include "RedemptionPlanner.h"
+#include "RiskAnalyzer.h"
 
 class CommandParser {
 public:
@@ -16,6 +18,9 @@ private:
     void addCard();
     void showCards();
     void editCard();
+    void removeCard();
+    void planCards();
+    void analyzeRisk();
 };
 
 #endif

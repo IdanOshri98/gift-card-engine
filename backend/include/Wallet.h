@@ -20,6 +20,7 @@ class Wallet{
         std::vector<GiftCard> getSoonToExpireCards();
         std::vector<GiftCard> getCardsByCompany(const std::string& company) const;
         int size();
+        int getNextId() const;
 
     private:
         std::vector<GiftCard> cards;

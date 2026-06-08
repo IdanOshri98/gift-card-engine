@@ -15,7 +15,7 @@ class GiftCard {
 
     public:
 
-        GiftCard(int id, std::string& title, std::vector<std::string>& companies, double& balance, std::string& expiryDate);
+        GiftCard(int id, const std::string& title, const std::vector<std::string>& companies, double balance, const std::string& expiryDate);
 
         std::vector<std::string> getCompanies() const;
         std::string getTitle() const;
