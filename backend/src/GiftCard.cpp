@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #include "../include/GiftCard.h"
 
@@ -57,6 +58,9 @@ void GiftCard :: setExpiryDate(const std::string& newExpiryDate) {
     updateDaysLeft();
 }
 void GiftCard :: addCompany(const std::string& company) {
+    if (std::find(companies.begin(), companies.end(), company) != companies.end()) {
+        return; // already exists
+    }
     companies.push_back(company);
 }
 

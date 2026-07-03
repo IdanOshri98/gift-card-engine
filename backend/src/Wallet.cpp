@@ -12,7 +12,7 @@ Wallet :: Wallet() {
 void Wallet :: addCard(GiftCard& card){
     cards.push_back(card);
     for(const std::string& company : card.getCompanies()) {
-        cardsByCompany[company].push_back(card);
+        cardsByCompany[company].insert(card.getId());
     }
 }
 
@@ -20,9 +20,7 @@ void Wallet :: removeCard(GiftCard& card) {
     for (const std::string& company : card.getCompanies()) {
         auto it = cardsByCompany.find(company);
         if (it != cardsByCompany.end()) {
-            it->second.erase(std::remove_if(it->second.begin(), it->second.end(), [&](const GiftCard& c) {
-                return c.getId() == card.getId();
-            }), it->second.end());
+            it->second.erase(card.getId());
             if (it->second.empty()) {
                 cardsByCompany.erase(it);
             }
@@ -63,16 +61,23 @@ std::vector<GiftCard> Wallet :: getSoonToExpireCards() {
 }
 
 std::vector<GiftCard> Wallet :: getCardsByCompany(const std::string& company) const {
+    std::vector<GiftCard> result;
     auto it = cardsByCompany.find(company);
-    if(it != cardsByCompany.end()) {
-        return it->second;
+    if (it == cardsByCompany.end()) {
+        return result;
     }
-    return {};
+
+    for (const GiftCard& card : cards) {
+        if (it->second.count(card.getId())) {
+            result.push_back(card);
+        }
+    }
+    return result;
 }
 
 void Wallet::addCompanyToCard(GiftCard* card, const std::string& company) {
     card->addCompany(company);
-    cardsByCompany[company].push_back(*card);
+    cardsByCompany[company].insert(card->getId());
 }
 
 int Wallet::getNextId() const {

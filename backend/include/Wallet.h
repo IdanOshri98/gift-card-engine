@@ -5,6 +5,7 @@
 #include <vector>
 #include "GiftCard.h"
 #include <unordered_map>
+#include <unordered_set>
 
 class Wallet{
     public:
@@ -24,7 +25,7 @@ class Wallet{
 
     private:
         std::vector<GiftCard> cards;
-        std::unordered_map<std::string, std::vector<GiftCard>> cardsByCompany;
+        std::unordered_map<std::string, std::unordered_set<int>> cardsByCompany; // company -> card IDs
 
 };
 

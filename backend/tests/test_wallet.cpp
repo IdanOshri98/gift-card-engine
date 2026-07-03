@@ -79,3 +79,88 @@ TEST(WalletTest, GetCardsByCompanyReturnsCorrectCards) {
     EXPECT_EQ(wallet.getCardsByCompany("Steam").size(), 1);
     EXPECT_EQ(wallet.getCardsByCompany("Unknown").size(), 0);
 }
+
+TEST(WalletTest, GetCardsByCompanyReflectsBalanceUpdatesAfterAdd) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Steam"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    found->deductBalance(40.0);
+
+    auto steamCards = wallet.getCardsByCompany("Steam");
+    ASSERT_EQ(steamCards.size(), 1);
+    EXPECT_DOUBLE_EQ(steamCards[0].getBalance(), 60.0);
+}
+
+TEST(WalletTest, GetCardsByCompanyReflectsTitleUpdatesAfterAdd) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Steam"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    found->setTitle("RenamedCard");
+
+    auto steamCards = wallet.getCardsByCompany("Steam");
+    ASSERT_EQ(steamCards.size(), 1);
+    EXPECT_EQ(steamCards[0].getTitle(), "RenamedCard");
+}
+
+TEST(WalletTest, CardWithMultipleCompaniesAppearsInEachBucket) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon", "Fox"});
+    wallet.addCard(card);
+
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 1);
+    EXPECT_EQ(wallet.getCardsByCompany("Fox").size(), 1);
+}
+
+TEST(WalletTest, RemoveCardRemovesItFromAllItsCompanyBuckets) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon", "Fox"});
+    wallet.addCard(card);
+    wallet.removeCard(card);
+
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 0);
+    EXPECT_EQ(wallet.getCardsByCompany("Fox").size(), 0);
+}
+
+TEST(WalletTest, RemoveCardDoesNotAffectOtherCardsInSameCompany) {
+    Wallet wallet;
+    auto c1 = makeCard(1, 100.0, "01-01-2030", {"Amazon"});
+    auto c2 = makeCard(2, 200.0, "01-01-2030", {"Amazon"});
+    wallet.addCard(c1);
+    wallet.addCard(c2);
+    wallet.removeCard(c1);
+
+    auto amazonCards = wallet.getCardsByCompany("Amazon");
+    ASSERT_EQ(amazonCards.size(), 1);
+    EXPECT_EQ(amazonCards[0].getId(), 2);
+}
+
+TEST(WalletTest, AddCompanyToCardAddsItToNewCompanyBucket) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    wallet.addCompanyToCard(found, "Fox");
+
+    EXPECT_EQ(wallet.getCardsByCompany("Fox").size(), 1);
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 1);
+}
+
+TEST(WalletTest, AddingSameCompanyTwiceDoesNotDuplicateInBucket) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    wallet.addCompanyToCard(found, "Amazon");
+
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 1);
+}

@@ -69,3 +69,18 @@ TEST(GiftCardTest, IsExpiringSoonReturnsFalseForExpiredCard) {
     auto card = makeCard(100.0, "01-01-2020");
     EXPECT_FALSE(card.isExpiringSoon());
 }
+
+TEST(GiftCardTest, AddCompanyAddsNewCompany) {
+    auto card = makeCard(100.0, "01-01-2030");
+    card.addCompany("NewCompany");
+    auto companies = card.getCompanies();
+    ASSERT_EQ(companies.size(), 2);
+    EXPECT_EQ(companies[0], "Company");
+    EXPECT_EQ(companies[1], "NewCompany");
+}
+
+TEST(GiftCardTest, AddCompanyDoesNotDuplicateExistingCompany) {
+    auto card = makeCard(100.0, "01-01-2030");
+    card.addCompany("Company");
+    EXPECT_EQ(card.getCompanies().size(), 1);
+}
