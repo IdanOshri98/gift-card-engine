@@ -17,7 +17,9 @@ export default function App() {
     setCards(data);
   }
 
-  useEffect(() => { loadCards(); }, []);
+  useEffect(() => {
+    getCards().then(setCards);
+  }, []);
 
   async function handleViewRisk() {
     const data = await getRiskCards();
