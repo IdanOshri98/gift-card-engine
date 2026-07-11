@@ -1,6 +1,19 @@
 #include <gtest/gtest.h>
 #include "Wallet.h"
 #include "GiftCard.h"
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+
+static std::string dateInDays(int n) {
+    std::time_t t = std::time(nullptr) + static_cast<std::time_t>(n) * 86400;
+    std::tm* tm = std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::setw(2) << std::setfill('0') << tm->tm_mday << "-"
+        << std::setw(2) << std::setfill('0') << (tm->tm_mon + 1) << "-"
+        << (tm->tm_year + 1900);
+    return oss.str();
+}
 
 static GiftCard makeCard(int id, double balance, const std::string& expiry,
                           const std::vector<std::string>& companies = {"Company"}) {
@@ -61,7 +74,7 @@ TEST(WalletTest, GetExpiredCardsReturnsOnlyExpired) {
 
 TEST(WalletTest, GetSoonToExpireReturnsCorrectCards) {
     Wallet wallet;
-    auto soon   = makeCard(1, 100.0, "20-06-2026");
+    auto soon   = makeCard(1, 100.0, dateInDays(15));
     auto later  = makeCard(2, 100.0, "01-01-2030");
     wallet.addCard(soon);
     wallet.addCard(later);
@@ -163,4 +176,33 @@ TEST(WalletTest, AddingSameCompanyTwiceDoesNotDuplicateInBucket) {
     wallet.addCompanyToCard(found, "Amazon");
 
     EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 1);
+}
+
+TEST(WalletTest, SyncCompaniesReplacesExistingCompanies) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon", "Fox"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    wallet.syncCompaniesForCard(found, {"Steam"});
+
+    EXPECT_EQ(wallet.getCardsByCompany("Steam").size(), 1);
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 0);
+    EXPECT_EQ(wallet.getCardsByCompany("Fox").size(), 0);
+    EXPECT_EQ(found->getCompanies().size(), 1);
+    EXPECT_EQ(found->getCompanies()[0], "Steam");
+}
+
+TEST(WalletTest, SyncCompaniesWithEmptyListRemovesAllCompanies) {
+    Wallet wallet;
+    auto card = makeCard(1, 100.0, "01-01-2030", {"Amazon"});
+    wallet.addCard(card);
+
+    GiftCard* found = wallet.findCardById(1);
+    ASSERT_NE(found, nullptr);
+    wallet.syncCompaniesForCard(found, {});
+
+    EXPECT_EQ(wallet.getCardsByCompany("Amazon").size(), 0);
+    EXPECT_TRUE(found->getCompanies().empty());
 }

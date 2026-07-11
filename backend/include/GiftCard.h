@@ -32,6 +32,7 @@ class GiftCard {
         void setExpiryDate(const std::string& newExpiryDate);
         void updateDaysLeft();
         void addCompany(const std::string& company);
+        void setCompanies(const std::vector<std::string>& newCompanies);
 
         bool isExpired();
         bool isExpiringSoon() ;

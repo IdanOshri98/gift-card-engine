@@ -14,6 +14,7 @@ class Wallet{
         void addCard(GiftCard& card);
         void removeCard(GiftCard& card);
         void addCompanyToCard(GiftCard* card, const std::string& company);
+        void syncCompaniesForCard(GiftCard* card, const std::vector<std::string>& newCompanies);
         GiftCard* findCardById(int id);
 
         const std::vector<GiftCard> getCards() const;

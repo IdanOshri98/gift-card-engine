@@ -1,5 +1,18 @@
 #include <gtest/gtest.h>
 #include "GiftCard.h"
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+
+static std::string dateInDays(int n) {
+    std::time_t t = std::time(nullptr) + static_cast<std::time_t>(n) * 86400;
+    std::tm* tm = std::localtime(&t);
+    std::ostringstream oss;
+    oss << std::setw(2) << std::setfill('0') << tm->tm_mday << "-"
+        << std::setw(2) << std::setfill('0') << (tm->tm_mon + 1) << "-"
+        << (tm->tm_year + 1900);
+    return oss.str();
+}
 
 static GiftCard makeCard(double balance, const std::string& expiry) {
     int id = 1;
@@ -56,7 +69,7 @@ TEST(GiftCardTest, IsExpiredReturnsFalseForFutureDate) {
 }
 
 TEST(GiftCardTest, IsExpiringSoonReturnsTrueWithin30Days) {
-    auto card = makeCard(100.0, "20-06-2026");
+    auto card = makeCard(100.0, dateInDays(15));
     EXPECT_TRUE(card.isExpiringSoon());
 }
 

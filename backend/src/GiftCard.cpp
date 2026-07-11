@@ -57,6 +57,10 @@ void GiftCard :: setExpiryDate(const std::string& newExpiryDate) {
     expiryDate = newExpiryDate;
     updateDaysLeft();
 }
+void GiftCard :: setCompanies(const std::vector<std::string>& newCompanies) {
+    companies = newCompanies;
+}
+
 void GiftCard :: addCompany(const std::string& company) {
     if (std::find(companies.begin(), companies.end(), company) != companies.end()) {
         return; // already exists

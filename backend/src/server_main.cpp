@@ -108,9 +108,8 @@ int main() {
         if (body.contains("balance"))    card->setBalance(body["balance"]);
         if (body.contains("expiryDate")) card->setExpiryDate(body["expiryDate"]);
         if (body.contains("companies")) {
-            for (const std::string& company : body["companies"]) {
-                wallet.addCompanyToCard(card, company);
-            }
+            std::vector<std::string> newCompanies = body["companies"];
+            wallet.syncCompaniesForCard(card, newCompanies);
         }
 
         repo.save(wallet.getCards());

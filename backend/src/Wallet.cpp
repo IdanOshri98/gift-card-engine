@@ -80,6 +80,23 @@ void Wallet::addCompanyToCard(GiftCard* card, const std::string& company) {
     cardsByCompany[company].insert(card->getId());
 }
 
+void Wallet::syncCompaniesForCard(GiftCard* card, const std::vector<std::string>& newCompanies) {
+    // הסר את הכרטיס מכל bucket קיים
+    for (const std::string& company : card->getCompanies()) {
+        auto it = cardsByCompany.find(company);
+        if (it != cardsByCompany.end()) {
+            it->second.erase(card->getId());
+            if (it->second.empty()) cardsByCompany.erase(it);
+        }
+    }
+    // החלף את רשימת החברות בכרטיס עצמו
+    card->setCompanies(newCompanies);
+    // הוסף לbuckets החדשים
+    for (const std::string& company : newCompanies) {
+        cardsByCompany[company].insert(card->getId());
+    }
+}
+
 int Wallet::getNextId() const {
     int maxId = 0;
     for (const GiftCard& card : cards) {
