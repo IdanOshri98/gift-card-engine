@@ -215,6 +215,37 @@ main h2 {
 
 button:hover { filter: brightness(1.15); }
 
+.network-error-banner {
+  background: var(--gm-error-bg);
+  border: 1px solid var(--gm-danger);
+  border-left: 4px solid var(--gm-danger);
+  color: var(--gm-error-text);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.9rem;
+}
+
+.network-error-banner code {
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  font-family: monospace;
+  color: inherit;
+}
+
+.network-error-banner button {
+  background: var(--gm-danger);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 button:focus-visible, input:focus-visible {
   outline: 2px solid var(--gm-accent);
   outline-offset: 1px;

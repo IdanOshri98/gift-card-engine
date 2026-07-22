@@ -11,26 +11,44 @@ export default function App() {
   const [editingCard, setEditingCard] = useState(null);
   const [riskData, setRiskData] = useState(null);
   const [planCards, setPlanCards] = useState([]);
+  const [networkError, setNetworkError] = useState(false);
 
   async function loadCards() {
-    const data = await getCards();
-    setCards(data);
+    try {
+      const data = await getCards();
+      setNetworkError(false);
+      setCards(data);
+    } catch {
+      setNetworkError(true);
+    }
   }
 
   useEffect(() => {
-    getCards().then(setCards);
+    getCards()
+      .then((data) => { setNetworkError(false); setCards(data); })
+      .catch(() => setNetworkError(true));
   }, []);
 
   async function handleViewRisk() {
-    const data = await getRiskCards();
-    setRiskData(data);
-    setView("risk");
+    try {
+      const data = await getRiskCards();
+      setNetworkError(false);
+      setRiskData(data);
+      setView("risk");
+    } catch {
+      setNetworkError(true);
+    }
   }
 
   async function handleViewPlan(by) {
-    const data = await getPlan(by);
-    setPlanCards(data);
-    setView("plan");
+    try {
+      const data = await getPlan(by);
+      setNetworkError(false);
+      setPlanCards(data);
+      setView("plan");
+    } catch {
+      setNetworkError(true);
+    }
   }
 
   return (
@@ -45,6 +63,13 @@ export default function App() {
           <button onClick={() => handleViewPlan("balance")}>Plan by Balance</button>
         </nav>
       </header>
+
+      {networkError && (
+        <div className="network-error-banner">
+          Cannot connect to backend — make sure <code>server.exe</code> is running on port 8080.
+          <button onClick={loadCards}>Retry</button>
+        </div>
+      )}
 
       <main>
         {editingCard && (
