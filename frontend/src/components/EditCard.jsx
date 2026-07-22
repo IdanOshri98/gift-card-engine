@@ -3,9 +3,8 @@ import CardForm from "./CardForm";
 
 export default function EditCard({ card, onSave, onCancel }) {
   async function handleSubmit(data) {
-    const result = await updateCard(card.id, data);
-    if (!result.error) onSave();
-    return result;
+    await updateCard(card.id, data);
+    onSave();
   }
 
   return (

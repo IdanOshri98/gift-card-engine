@@ -25,19 +25,20 @@ export default function CardForm({ heading, initialValues, requireFields = false
       ? form.companies.split(",").map((c) => c.trim()).filter(Boolean)
       : [];
 
+    if (form.title.includes("|") || form.title.includes(",") || companies.some((c) => c.includes("|") || c.includes(","))) {
+      setError("Title and company names can't contain '|' or ','");
+      return;
+    }
+
     try {
-      const result = await onSubmit({
+      await onSubmit({
         title: form.title,
         balance: Number(form.balance),
         expiryDate: form.expiryDate,
         companies,
       });
-
-      if (result.error) {
-        setError(result.error);
-      }
-    } catch {
-      setError("Network error — is the backend server running on port 8080?");
+    } catch (err) {
+      setError(err.message || "Network error — is the backend server running on port 8080?");
     }
   }
 

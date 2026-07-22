@@ -1,5 +1,20 @@
 const BASE_URL = "http://localhost:8080/api";
 
+async function throwIfError(res) {
+  if (!res.ok) {
+    let message = "Request failed";
+    try {
+      const body = await res.json();
+      if (body && body.error) {
+        message = body.error;
+      }
+    } catch {
+      // ignore invalid JSON body, fall back to generic message
+    }
+    throw new Error(message);
+  }
+}
+
 export async function getCards() {
   const res = await fetch(`${BASE_URL}/cards`);
   return res.json();
@@ -11,6 +26,7 @@ export async function addCard(card) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(card),
   });
+  await throwIfError(res);
   return res.json();
 }
 
@@ -20,11 +36,13 @@ export async function updateCard(id, data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+  await throwIfError(res);
   return res.json();
 }
 
 export async function deleteCard(id) {
   const res = await fetch(`${BASE_URL}/cards/${id}`, { method: "DELETE" });
+  await throwIfError(res);
   return res.json();
 }
 

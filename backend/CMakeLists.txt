@@ -15,6 +15,7 @@ set(SOURCES
     src/GiftCard.cpp
     src/RedemptionPlanner.cpp
     src/RiskAnalyzer.cpp
+    src/ValidationUtils.cpp
     src/Wallet.cpp
     src/GCApp.cpp
 )
@@ -51,11 +52,13 @@ set(TEST_SOURCES
     src/FileRepository.cpp
     src/RedemptionPlanner.cpp
     src/RiskAnalyzer.cpp
+    src/ValidationUtils.cpp
     tests/test_gift_card.cpp
     tests/test_wallet.cpp
     tests/test_file_repository.cpp
     tests/test_redemption_planner.cpp
     tests/test_risk_analyzer.cpp
+    tests/test_validation_utils.cpp
 )
 
 add_executable(run_tests ${TEST_SOURCES})
@@ -73,6 +76,7 @@ set(SERVER_SOURCES
     src/FileRepository.cpp
     src/RedemptionPlanner.cpp
     src/RiskAnalyzer.cpp
+    src/ValidationUtils.cpp
 )
 
 add_executable(server ${SERVER_SOURCES})

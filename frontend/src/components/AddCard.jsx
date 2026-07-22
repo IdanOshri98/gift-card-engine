@@ -5,9 +5,8 @@ const EMPTY_FORM = { title: "", balance: "", expiryDate: "", companies: "" };
 
 export default function AddCard({ onAdd }) {
   async function handleSubmit(card) {
-    const result = await addCard(card);
-    if (!result.error) onAdd();
-    return result;
+    await addCard(card);
+    onAdd();
   }
 
   return (

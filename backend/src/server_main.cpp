@@ -1,10 +1,13 @@
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 #include "Wallet.h"
 #include "FileRepository.h"
 #include "RedemptionPlanner.h"
 #include "RiskAnalyzer.h"
+#include "ValidationUtils.h"
 
 using json = nlohmann::json;
 
@@ -28,6 +31,15 @@ static json cardsToJson(std::vector<GiftCard>& cards) {
     return arr;
 }
 
+static bool parseCardId(const std::string& raw, int& id) {
+    try {
+        id = std::stoi(raw);
+        return true;
+    } catch (const std::exception&) {
+        return false;
+    }
+}
+
 int main() {
     FileRepository repo("cards.txt");
     Wallet wallet;
@@ -37,6 +49,7 @@ int main() {
     }
 
     httplib::Server svr;
+    svr.new_task_queue = [] { return new httplib::ThreadPool(1); };
 
     // ── GET /api/cards ───────────────────────────────────────────────
     svr.Get("/api/cards", [&](const httplib::Request&, httplib::Response& res) {
@@ -64,6 +77,18 @@ int main() {
             return;
         }
 
+        if (!ValidationUtils::isValidExpiryDate(expiryDate)) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Invalid expiryDate format, expected DD-MM-YYYY\"}", "application/json");
+            return;
+        }
+
+        if (ValidationUtils::hasInvalidDelimiters(title, companies)) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Title and companies must not contain '|' or ',' characters\"}", "application/json");
+            return;
+        }
+
         int id = wallet.getNextId();
         GiftCard newCard(id, title, companies, balance, expiryDate);
         wallet.addCard(newCard);
@@ -75,7 +100,12 @@ int main() {
 
     // ── DELETE /api/cards/:id ────────────────────────────────────────
     svr.Delete("/api/cards/(\\d+)", [&](const httplib::Request& req, httplib::Response& res) {
-        int id = std::stoi(req.matches[1]);
+        int id;
+        if (!parseCardId(req.matches[1], id)) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Invalid card id\"}", "application/json");
+            return;
+        }
         GiftCard* card = wallet.findCardById(id);
         if (card == nullptr) {
             res.status = 404;
@@ -89,7 +119,12 @@ int main() {
 
     // ── PUT /api/cards/:id ───────────────────────────────────────────
     svr.Put("/api/cards/(\\d+)", [&](const httplib::Request& req, httplib::Response& res) {
-        int id = std::stoi(req.matches[1]);
+        int id;
+        if (!parseCardId(req.matches[1], id)) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Invalid card id\"}", "application/json");
+            return;
+        }
         GiftCard* card = wallet.findCardById(id);
         if (card == nullptr) {
             res.status = 404;
@@ -104,11 +139,34 @@ int main() {
             return;
         }
 
+        if (body.contains("expiryDate") && !ValidationUtils::isValidExpiryDate(body["expiryDate"].get<std::string>())) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Invalid expiryDate format, expected DD-MM-YYYY\"}", "application/json");
+            return;
+        }
+
+        std::string newTitle = body.contains("title") ? body.value("title", "") : card->getTitle();
+        std::vector<std::string> newCompanies = body.contains("companies")
+            ? body["companies"].get<std::vector<std::string>>()
+            : card->getCompanies();
+
+        if (ValidationUtils::hasInvalidDelimiters(newTitle, newCompanies)) {
+            res.status = 400;
+            res.set_content("{\"error\":\"Title and companies must not contain '|' or ',' characters\"}", "application/json");
+            return;
+        }
+
+        if (!body.contains("title") && !body.contains("balance") &&
+            !body.contains("expiryDate") && !body.contains("companies")) {
+            res.status = 400;
+            res.set_content("{\"error\":\"No valid fields to update\"}", "application/json");
+            return;
+        }
+
         if (body.contains("title"))      card->setTitle(body["title"]);
         if (body.contains("balance"))    card->setBalance(body["balance"]);
         if (body.contains("expiryDate")) card->setExpiryDate(body["expiryDate"]);
         if (body.contains("companies")) {
-            std::vector<std::string> newCompanies = body["companies"];
             wallet.syncCompaniesForCard(card, newCompanies);
         }
 
