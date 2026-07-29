@@ -1,109 +1,380 @@
-# Gift Card Engine
+# 🎁 Gift Card Engine
 
-A small full-stack app for tracking gift cards: balances, expiry dates, redemption planning, and expiry-risk analysis. Built as a C++ backend (CLI + REST API) with a React frontend.
+A full-stack application for managing gift cards, tracking balances, monitoring expiration dates, and generating intelligent redemption recommendations.
 
-## Features
+The project combines a modern **C++17 backend** with a **React + Vite frontend**, exposing the same business logic through both a REST API and an interactive command-line interface.
 
-- Add, edit, and remove gift cards (title, balance, expiry date, associated companies)
-- Track expiry: flag cards that are expired or expiring soon
-- **Redemption planning** — order cards by expiry date or by balance to decide what to spend first
-- **Risk analysis** — surface cards at risk of expiring and the total balance at stake
-- Simple flat-file persistence (`cards.txt`), no external database required
-- Usable either as an interactive CLI or through a REST API + web UI
+🌐 **Live Demo:** https://gift-card-engine.vercel.app/
 
-## Project structure
+> **Note:** The frontend is deployed publicly on Vercel. The C++ backend currently runs locally and will be deployed in a future release.
+
+---
+
+# ✨ Features
+
+### 💳 Gift Card Management
+
+- Create gift cards
+- Edit existing cards
+- Delete cards
+- Store balances
+- Track associated companies
+
+### 📅 Expiration Tracking
+
+- Detect expired cards
+- Highlight cards expiring soon
+- Calculate total balance at risk
+
+### 🎯 Redemption Planning
+
+Generate smart spending recommendations:
+
+- Sort by earliest expiration
+- Sort by highest balance
+
+### 📊 Risk Analysis
+
+Analyze your wallet to discover:
+
+- Expired cards
+- Soon-to-expire cards
+- Total money at risk
+
+### 💾 Persistence
+
+- Automatic saving
+- File-based storage (`cards.txt`)
+- No external database required
+
+### 🖥️ Multiple Interfaces
+
+The same backend logic powers:
+
+- REST API
+- Interactive CLI
+- React Web Application
+
+---
+
+# 🏗️ Architecture
 
 ```
-backend/
-  include/        Headers (GiftCard, Wallet, FileRepository, RedemptionPlanner, RiskAnalyzer, ValidationUtils, ...)
-  src/
-    main.cpp          CLI entry point
-    server_main.cpp   REST API server entry point
-    GCApp.cpp, CommandParser.cpp   CLI application layer
-    GiftCard.cpp, Wallet.cpp, FileRepository.cpp
-    RedemptionPlanner.cpp, RiskAnalyzer.cpp, ValidationUtils.cpp
-  tests/          GoogleTest unit tests
-  CMakeLists.txt
-
-frontend/
-  src/
-    App.jsx, api.js
-    components/    AddCard, EditCard, CardList, CardForm
+                    React + Vite
+                         │
+                  HTTP / JSON
+                         │
+                         ▼
+                 C++ REST API Server
+                  (cpp-httplib)
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+        ▼                ▼                ▼
+     Wallet       Risk Analyzer    Redemption Planner
+        │
+        ▼
+ File Repository (cards.txt)
 ```
 
-## Backend — build & run
+The project follows a layered architecture that separates:
 
-### Prerequisites
+- Presentation
+- Business Logic
+- Data Persistence
 
-- CMake 3.20+, Ninja, and a C++17 compiler.
-- **Windows:** install [MSYS2](https://www.msys2.org/), then from the **MSYS2 UCRT64** terminal (Start menu → "MSYS2 UCRT64", not plain PowerShell/cmd) run:
-  ```bash
-  pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
-  ```
-  Build **and** run the binaries from that same MSYS2 UCRT64 terminal (or a bash terminal configured to it in your editor). Plain Windows PowerShell/cmd doesn't have `C:\msys64\ucrt64\bin` on PATH by default — running the built `.exe` from there fails immediately with a DLL-not-found crash (exit code `-1073741511`), since runtime DLLs like `libstdc++-6.dll` live in that folder.
-- **macOS:** `brew install cmake ninja` (Xcode command line tools provide the compiler).
-- **Linux:** `sudo apt install cmake ninja-build g++` (or your distro's equivalent).
+This allows both the CLI and REST API to reuse exactly the same domain logic.
 
-Dependencies (GoogleTest, cpp-httplib, nlohmann/json) are fetched automatically via CMake's `FetchContent`.
+---
+
+# 📂 Project Structure
+
+```
+gift-card-engine/
+│
+├── backend/
+│   ├── include/
+│   ├── src/
+│   │   ├── main.cpp
+│   │   ├── server_main.cpp
+│   │   ├── GiftCard.cpp
+│   │   ├── Wallet.cpp
+│   │   ├── FileRepository.cpp
+│   │   ├── RedemptionPlanner.cpp
+│   │   ├── RiskAnalyzer.cpp
+│   │   └── ValidationUtils.cpp
+│   │
+│   ├── tests/
+│   └── CMakeLists.txt
+│
+├── frontend/
+│   ├── src/
+│   ├── components/
+│   └── package.json
+│
+└── README.md
+```
+
+---
+
+# 🚀 Live Demo
+
+| Component | Status |
+|-----------|--------|
+| Frontend | ✅ https://gift-card-engine.vercel.app/ |
+| Backend API | ⚠️ Localhost only |
+
+---
+
+# 🛠️ Technology Stack
+
+## Backend
+
+- C++17
+- CMake
+- Ninja
+- cpp-httplib
+- nlohmann/json
+- GoogleTest
+
+## Frontend
+
+- React 19
+- Vite
+- JavaScript
+- ESLint
+
+---
+
+# ⚙️ Building the Backend
+
+## Requirements
+
+### Windows
+
+Install MSYS2 and the required packages:
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-gcc \
+          mingw-w64-ucrt-x86_64-cmake \
+          mingw-w64-ucrt-x86_64-ninja
+```
+
+### macOS
+
+```bash
+brew install cmake ninja
+```
+
+### Linux
+
+```bash
+sudo apt install cmake ninja-build g++
+```
+
+---
+
+## Build
 
 ```bash
 cd backend
+
 cmake -B build -G Ninja
+
 cmake --build build
 ```
 
-This produces three targets directly inside `backend/build/`:
+---
 
-| Target       | Description                                  |
-|--------------|-----------------------------------------------|
-| `cli`        | Interactive command-line app                  |
-| `server`     | REST API server (listens on `localhost:8080`) |
-| `run_tests`  | GoogleTest unit test suite                    |
+# ▶️ Running
 
-Run them from `backend/build` (not `backend/`):
+## Backend
 
 ```bash
 cd backend/build
-./cli          # interactive CLI
-./server       # REST API on http://localhost:8080
-./run_tests    # unit tests
+
+./server
 ```
 
-> **Troubleshooting:** if `./server` (or `./cli`) exits instantly with no output, it's almost always a missing-DLL issue from running outside the MSYS2 shell (see Prerequisites above) — reopen the MSYS2 UCRT64 terminal and re-run from there.
+Server:
 
-### REST API
+```
+http://localhost:8080
+```
 
-All endpoints return/consume JSON. Card data is persisted to `cards.txt` after each write.
+Available executables:
 
-| Method | Path               | Description                                  |
-|--------|--------------------|-----------------------------------------------|
-| GET    | `/api/cards`       | List all cards                                |
-| POST   | `/api/cards`       | Create a card (`title`, `balance`, `expiryDate` as `DD-MM-YYYY`, `companies`) |
-| PUT    | `/api/cards/:id`   | Update a card's title, balance, expiry, or companies |
-| DELETE | `/api/cards/:id`   | Remove a card                                 |
-| GET    | `/api/cards/risk`  | Cards at risk of expiring + total balance at risk |
-| GET    | `/api/cards/plan`  | Redemption plan, ordered `?by=expiry` (default) or `?by=balance` |
+| Executable | Purpose |
+|------------|---------|
+| cli | Interactive CLI |
+| server | REST API |
+| run_tests | Unit Tests |
 
-## Frontend — build & run
+---
 
-Requires Node.js.
+# 🌐 REST API
+
+## Get all cards
+
+```http
+GET /api/cards
+```
+
+---
+
+## Create a card
+
+```http
+POST /api/cards
+```
+
+```json
+{
+  "title": "Amazon",
+  "balance": 150,
+  "expiryDate": "31-12-2026",
+  "companies": [
+    "Amazon"
+  ]
+}
+```
+
+---
+
+## Update card
+
+```http
+PUT /api/cards/:id
+```
+
+---
+
+## Delete card
+
+```http
+DELETE /api/cards/:id
+```
+
+---
+
+## Risk Analysis
+
+```http
+GET /api/cards/risk
+```
+
+Returns:
+
+- cards at risk
+- total balance at risk
+
+---
+
+## Redemption Plan
+
+```http
+GET /api/cards/plan?by=expiry
+```
+
+or
+
+```http
+GET /api/cards/plan?by=balance
+```
+
+---
+
+# 💻 Frontend
+
+Install dependencies:
 
 ```bash
 cd frontend
+
 npm install
-npm run dev       # start dev server (expects the backend running on :8080)
-npm run build     # production build
-npm run lint      # ESLint
 ```
 
-## Running tests
+Run development server:
+
+```bash
+npm run dev
+```
+
+Production build:
+
+```bash
+npm run build
+```
+
+Preview production build:
+
+```bash
+npm run preview
+```
+
+---
+
+# 🧪 Testing
+
+Run all backend tests:
 
 ```bash
 cd backend/build
+
 ./run_tests
 ```
 
-## Tech stack
+The project includes unit tests covering the core business logic using GoogleTest.
 
-- **Backend:** C++17, CMake, [cpp-httplib](https://github.com/yhirose/cpp-httplib), [nlohmann/json](https://github.com/nlohmann/json), [GoogleTest](https://github.com/google/googletest)
-- **Frontend:** React 19, Vite, ESLint
+---
+
+# 📈 Future Improvements
+
+- SQLite persistence
+- Docker support
+- Backend cloud deployment
+- Authentication
+- User accounts
+- Search & filtering
+- Dashboard analytics
+- Categories & tags
+- CI/CD with GitHub Actions
+
+---
+
+# 📸 Screenshots
+
+## Dashboard
+
+> Coming soon
+
+## Risk Analysis
+
+> Coming soon
+
+## Redemption Planner
+
+> Coming soon
+
+---
+
+# 🎯 Learning Goals
+
+This project was built to practice and demonstrate:
+
+- Modern C++ development
+- Object-Oriented Design
+- REST API development
+- React frontend development
+- Client-server architecture
+- Unit testing
+- Input validation
+- Software architecture
+- Clean code principles
+- Git & GitHub workflow
+
+---
+
+# 📄 License
+
+This project is intended for educational and portfolio purposes.
