@@ -33,7 +33,18 @@ frontend/
 
 ## Backend — build & run
 
-Requires CMake 3.20+ and a C++17 compiler. Dependencies (GoogleTest, cpp-httplib, nlohmann/json) are fetched automatically via CMake's `FetchContent`.
+### Prerequisites
+
+- CMake 3.20+, Ninja, and a C++17 compiler.
+- **Windows:** install [MSYS2](https://www.msys2.org/), then from the **MSYS2 UCRT64** terminal (Start menu → "MSYS2 UCRT64", not plain PowerShell/cmd) run:
+  ```bash
+  pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+  ```
+  Build **and** run the binaries from that same MSYS2 UCRT64 terminal (or a bash terminal configured to it in your editor). Plain Windows PowerShell/cmd doesn't have `C:\msys64\ucrt64\bin` on PATH by default — running the built `.exe` from there fails immediately with a DLL-not-found crash (exit code `-1073741511`), since runtime DLLs like `libstdc++-6.dll` live in that folder.
+- **macOS:** `brew install cmake ninja` (Xcode command line tools provide the compiler).
+- **Linux:** `sudo apt install cmake ninja-build g++` (or your distro's equivalent).
+
+Dependencies (GoogleTest, cpp-httplib, nlohmann/json) are fetched automatically via CMake's `FetchContent`.
 
 ```bash
 cd backend
@@ -41,7 +52,7 @@ cmake -B build -G Ninja
 cmake --build build
 ```
 
-This produces three targets in `build/`:
+This produces three targets directly inside `backend/build/`:
 
 | Target       | Description                                  |
 |--------------|-----------------------------------------------|
@@ -49,13 +60,16 @@ This produces three targets in `build/`:
 | `server`     | REST API server (listens on `localhost:8080`) |
 | `run_tests`  | GoogleTest unit test suite                    |
 
-Run them from `backend/build`:
+Run them from `backend/build` (not `backend/`):
 
 ```bash
+cd backend/build
 ./cli          # interactive CLI
 ./server       # REST API on http://localhost:8080
 ./run_tests    # unit tests
 ```
+
+> **Troubleshooting:** if `./server` (or `./cli`) exits instantly with no output, it's almost always a missing-DLL issue from running outside the MSYS2 shell (see Prerequisites above) — reopen the MSYS2 UCRT64 terminal and re-run from there.
 
 ### REST API
 
